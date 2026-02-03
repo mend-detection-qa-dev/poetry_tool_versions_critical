@@ -6,11 +6,14 @@ authors = ["Test <test@example.com>"]
 
 [tool.poetry.dependencies]
 python = "^3.8"
-# CRITICAL: These packages require Python >=3.11
-# tomli 2.0+ works on older Python but marker makes it conditional
-# If tool uses Python 3.8, tomli will be skipped
-tomli = {version = ">=2.0.0", markers = "python_version >= '3.11'"}
-typing-extensions = ">=4.8.0"
+# CRITICAL VULNERABILITIES: These versions have known CVEs
+# The vulnerable packages themselves support older Python, but we use markers to simulate
+# conditional installation based on Python version detection
+# If scanner uses wrong Python version, it will skip these packages entirely
+certifi = {version = "2022.12.7", markers = "python_version >= '3.11'"}  # CVE-2023-37920 - Certificate validation issue
+cryptography = {version = "39.0.0", markers = "python_version >= '3.11'"}  # CVE-2023-23931 - Memory corruption
+urllib3 = {version = "1.26.15", markers = "python_version >= '3.11'"}  # CVE-2023-43804 - Cookie leak
+requests = "2.28.2"  # Depends on above vulnerable packages
 
 [build-system]
 requires = ["poetry-core"]
