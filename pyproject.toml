@@ -5,7 +5,6 @@ description = "Critical test: .tool-versions overrides pyproject.toml - Dependen
 authors = ["Test <test@example.com>"]
 
 [tool.poetry.dependencies]
-# CRITICAL: These package versions have VULNERABILITIES and require Python >=3.9 or >=3.11
 pillow = "12.1.0" 
 networkx = "3.6.1" 
 numpy = "2.4.2" 
