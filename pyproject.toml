@@ -10,7 +10,7 @@ python = "^3.8"
 tornado = "6.2" 
 pillow = "9.3.0" 
 werkzeug = "2.2.2"  
-urllib3 = "1.26.5"  
+urllib3 = "2.6.0"  
 
 
 [build-system]
