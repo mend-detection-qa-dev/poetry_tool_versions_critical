@@ -6,14 +6,13 @@ authors = ["Test <test@example.com>"]
 
 [tool.poetry.dependencies]
 python = "^3.8"
-# CRITICAL VULNERABILITIES: These versions have known CVEs
-# The vulnerable packages themselves support older Python, but we use markers to simulate
-# conditional installation based on Python version detection
-# If scanner uses wrong Python version, it will skip these packages entirely
-certifi = {version = "2022.12.7", markers = "python_version >= '3.11'"}  # CVE-2023-37920 - Certificate validation issue
-cryptography = {version = "39.0.0", markers = "python_version >= '3.11'"}  # CVE-2023-23931 - Memory corruption
-urllib3 = {version = "1.26.15", markers = "python_version >= '3.11'"}  # CVE-2023-43804 - Cookie leak
-requests = "2.28.2"  # Depends on above vulnerable packages
+# CRITICAL: These package versions REQUIRE Python >=3.9/3.10/3.11
+# They CANNOT be installed with Python 3.8 - installation will fail
+# Combined with vulnerabilities, wrong Python detection = missed vulnerabilities
+numpy = {version = "==1.26.0", markers = "python_version >= '3.9'"}  # Requires Python >=3.9, won't work with 3.8
+pillow = {version = "==9.3.0", markers = "python_version >= '3.11'"}  # CVE-2023-50447 - Arbitrary code execution
+GitPython = {version = "==3.1.30", markers = "python_version >= '3.11'"}  # CVE-2023-40267 - Remote code execution
+aiohttp = {version = "==3.8.5", markers = "python_version >= '3.11'"}  # CVE-2024-23334 - Directory traversal
 
 [build-system]
 requires = ["poetry-core"]

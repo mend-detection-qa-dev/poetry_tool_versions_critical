@@ -9,30 +9,32 @@ Poetry
 - **Conflict**: pyproject.toml says ^3.8 (SHOULD BE IGNORED)
 
 ## Dependencies (CRITICAL - CONTAINS KNOWN VULNERABILITIES)
-- `certifi==2022.12.7` - **CVE-2023-37920** (CRITICAL) with marker `python_version >= "3.11"`
-- `cryptography==39.0.0` - **CVE-2023-23931** (HIGH) with marker `python_version >= "3.11"`
-- `urllib3==1.26.15` - **CVE-2023-43804** (MEDIUM) with marker `python_version >= "3.11"`
-- `requests>=2.28.0` - Depends on the vulnerable packages above
+- `numpy==1.26.0` - **Requires Python >=3.9** (INCOMPATIBLE with Python 3.8)
+- `pillow==9.3.0` - **CVE-2023-50447** (Arbitrary code execution) with marker `python_version >= "3.11"`
+- `GitPython==3.1.30` - **CVE-2023-40267** (Remote code execution) with marker `python_version >= "3.11"`
+- `aiohttp==3.8.5` - **CVE-2024-23334** (Directory traversal) with marker `python_version >= "3.11"`
 
 ## Test Purpose
 **CRITICAL VULNERABILITY DETECTION TEST WITH ENVIRONMENT MARKERS AND .tool-versions PRIORITY**
 
 ### Why This Test Matters
-Multiple vulnerable dependencies have environment markers: `python_version >= "3.11"`
+Dependencies have strict Python version requirements and environment markers.
 
 If tool uses **3.11.0** from .tool-versions:
-- ✅ Environment markers evaluate to TRUE
-- ✅ Vulnerable packages (certifi, cryptography, urllib3) are installed
+- ✅ numpy 1.26.0 satisfies Python >=3.9 requirement
+- ✅ Environment markers evaluate to TRUE for pillow, GitPython, aiohttp
+- ✅ Vulnerable packages are installed
 - ✅ **Security scanner SHOULD detect 3 CVEs**
 - ✅ Lock file was created with this version
-- 🔴 **Expected CVEs**: CVE-2023-37920, CVE-2023-23931, CVE-2023-43804
+- 🔴 **Expected CVEs**: CVE-2023-50447, CVE-2023-40267, CVE-2024-23334
 
 If tool uses **3.8** from pyproject.toml:
-- ❌ Environment markers evaluate to FALSE
-- ❌ Vulnerable packages are SKIPPED during installation
+- ❌ numpy 1.26.0 FAILS Python >=3.9 requirement (INCOMPATIBLE)
+- ❌ Environment markers evaluate to FALSE for other packages
+- ❌ Vulnerable packages are SKIPPED or installation FAILS
 - ❌ **Security scanner MISSES all vulnerabilities** (FALSE NEGATIVE)
 - ❌ Lock file is inconsistent with resolved dependencies
-- 🔴 **CRITICAL SECURITY ISSUE**: Silent omission of vulnerable code
+- 🔴 **CRITICAL SECURITY ISSUE**: Wrong Python version = invisible vulnerabilities
 
 ### .tool-versions Priority Test
 This specifically tests that tools properly detect and prioritize `.tool-versions` over `pyproject.toml`.
@@ -40,14 +42,22 @@ This specifically tests that tools properly detect and prioritize `.tool-version
 - It should override the Python version in pyproject.toml
 - The lock file was generated using Python 3.11.0 from .tool-versions
 
-### Important Note on Environment Markers
-The vulnerable packages (certifi, cryptography, urllib3) **technically support Python 3.8+**, but we use environment markers `python_version >= '3.11'` to create a test scenario where:
-- The packages were added to the project **when using Python 3.11** (as specified in .tool-versions)
-- They are conditionally included **only when Python >= 3.11 is detected**
-- This simulates real-world scenarios where:
-  - Certain dependencies are only needed for newer Python versions
-  - Security scanners must respect the same Python version used during lock file generation
-  - Wrong version detection leads to incomplete dependency resolution
+### Important Note on Python Version Requirements
+This test uses a combination of **actual Python version incompatibilities** and **environment markers**:
+
+1. **numpy 1.26.0** genuinely requires Python >=3.9 and **will NOT work** with Python 3.8
+2. **pillow, GitPython, aiohttp** use environment markers `python_version >= '3.11'` to simulate:
+   - Packages added to the project when using Python 3.11 (as specified in .tool-versions)
+   - Conditional dependencies based on Python version detection
+   - Real-world scenarios where certain dependencies are only needed for newer Python versions
+
+This creates a realistic test scenario where:
+- Lock file was generated with Python 3.11 from .tool-versions
+- Security scanners must use the **same Python version** to properly resolve dependencies
+- Using the wrong Python version (3.8 from pyproject.toml) causes:
+  - numpy installation to FAIL (incompatible)
+  - Other packages to be SKIPPED (markers not satisfied)
+  - All vulnerabilities to become INVISIBLE to security scans
 
 ## Expected Behavior
 1. Tool detects .tool-versions (3.11.0) as higher priority than pyproject.toml
@@ -72,36 +82,44 @@ This is a CRITICAL security issue:
 5. Organization has false sense of security
 
 ### Known Vulnerabilities in This Test
-- **CVE-2023-37920** (certifi 2022.12.7): Certifi removes TrustCor root certificates
-- **CVE-2023-23931** (cryptography 39.0.0): Cipher.update_into can corrupt memory
-- **CVE-2023-43804** (urllib3 1.26.15): Cookie request header leak via HTTP redirect
+- **CVE-2023-50447** (pillow 9.3.0): Arbitrary code execution via crafted image file
+- **CVE-2023-40267** (GitPython 3.1.30): Remote code execution via malicious repository
+- **CVE-2024-23334** (aiohttp 3.8.5): Directory traversal vulnerability in static file serving
+
+### Python Version Incompatibility
+- **numpy 1.26.0**: Requires Python >=3.9, drops support for Python 3.8
+  - Using Python 3.8: Installation FAILS with compatibility error
+  - Using Python 3.11: Installation succeeds
 
 ## Verification Test
 ```bash
 # Verify Python version detection
 cat .tool-versions  # Should show 3.11.0
 
-# Install dependencies
+# Install dependencies (requires Python 3.11)
 poetry install
 
 # Verify vulnerable packages were installed (should succeed with Python 3.11)
-poetry run python -c "import certifi; print('✅ certifi version:', certifi.__version__)"
-poetry run python -c "import cryptography; print('✅ cryptography version:', cryptography.__version__)"
-poetry run python -c "import urllib3; print('✅ urllib3 version:', urllib3.__version__)"
+poetry run python -c "import numpy; print('✅ numpy version:', numpy.__version__)"
+poetry run python -c "import PIL; print('✅ pillow version:', PIL.__version__)"
+poetry run python -c "import git; print('✅ GitPython version:', git.__version__)"
+poetry run python -c "import aiohttp; print('✅ aiohttp version:', aiohttp.__version__)"
 
 # Run security scan
-# Expected: 3 vulnerabilities detected (CVE-2023-37920, CVE-2023-23931, CVE-2023-43804)
+# Expected: 3 vulnerabilities detected (CVE-2023-50447, CVE-2023-40267, CVE-2024-23334)
 ```
 
 ### Security Scanner Test Results
 **CORRECT (uses .tool-versions Python 3.11.0)**:
-- ✅ Detects certifi 2022.12.7 - CVE-2023-37920
-- ✅ Detects cryptography 39.0.0 - CVE-2023-23931
-- ✅ Detects urllib3 1.26.15 - CVE-2023-43804
+- ✅ Installs numpy 1.26.0 (satisfies Python >=3.9)
+- ✅ Detects pillow 9.3.0 - CVE-2023-50447
+- ✅ Detects GitPython 3.1.30 - CVE-2023-40267
+- ✅ Detects aiohttp 3.8.5 - CVE-2024-23334
 - **Result**: 3 vulnerabilities found ✅
 
 **INCORRECT (uses pyproject.toml Python ^3.8)**:
-- ❌ Skips certifi (marker not satisfied)
-- ❌ Skips cryptography (marker not satisfied)
-- ❌ Skips urllib3 (marker not satisfied)
+- ❌ numpy 1.26.0 installation FAILS (incompatible with Python 3.8)
+- ❌ Skips pillow (marker not satisfied)
+- ❌ Skips GitPython (marker not satisfied)
+- ❌ Skips aiohttp (marker not satisfied)
 - **Result**: 0 vulnerabilities found 🔴 FALSE NEGATIVE
