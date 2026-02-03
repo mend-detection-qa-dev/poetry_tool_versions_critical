@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "poetry-tool-versions-critical"
+version = "0.1.0"
+description = "Critical test: .tool-versions overrides pyproject.toml - Dependencies require Python 3.11+"
+authors = ["Test <test@example.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+# CRITICAL: These packages require Python >=3.11
+# tomli 2.0+ works on older Python but marker makes it conditional
+# If tool uses Python 3.8, tomli will be skipped
+tomli = {version = ">=2.0.0", markers = "python_version >= '3.11'"}
+typing-extensions = ">=4.8.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
