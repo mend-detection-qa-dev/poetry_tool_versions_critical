@@ -6,7 +6,7 @@ authors = ["Test <test@example.com>"]
 
 [project]
 name = "poetry-tool-versions-critical"
-requires-python = ">=3.11" 
+requires-python = "^3.11" 
 
 [tool.poetry.dependencies]
 pillow = "12.1.0" 
