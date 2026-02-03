@@ -4,6 +4,9 @@ version = "0.1.0"
 description = "Critical test: .tool-versions overrides pyproject.toml - Dependencies require Python 3.11+"
 authors = ["Test <test@example.com>"]
 
+[project]
+requires-python = ">=3.10" 
+
 [tool.poetry.dependencies]
 pillow = "12.1.0" 
 networkx = "3.6.1" 
