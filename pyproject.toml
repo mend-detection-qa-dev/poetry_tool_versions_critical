@@ -5,7 +5,7 @@ description = "Critical test: .tool-versions overrides pyproject.toml - Dependen
 authors = ["Test <test@example.com>"]
 
 [project]
-requires-python = ">=3.10" 
+requires-python = ">=3.11" 
 
 [tool.poetry.dependencies]
 pillow = "12.1.0" 
